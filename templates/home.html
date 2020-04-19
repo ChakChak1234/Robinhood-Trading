@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title> Robinhood Bot</title>
+        <style>
+            * {box-sizing: border-box;}
+            body {background-color:beige;}
+            header {
+                background-color:aquamarine;
+                padding: 30px;
+                text-align: center;
+                font-size: 25px;
+            }
+            ul {
+                list-style-type: none;
+                padding: 0;
+                margin: 0;
+                overflow: hidden;
+                background-color: #333;
+            }
+            li {
+                float: left;
+            }
+            li a {
+                display: block;
+                color: white;
+                text-align: center;
+                padding: 14px 16px;
+                text-decoration: none;
+            }
+            div {
+                text-align: center;
+                width: 100%;
+            }
+
+            .column {
+                float: left;
+                width: 50%;
+            }
+
+            .row:after {
+                content: '';
+                display: table;
+                clear: both;
+            }
+
+            #holdings {
+                margin-left: auto;
+                margin-right: auto;
+                text-align: center;
+                align-items: center;
+
+            }
+
+            #watchlist {
+                margin-left: auto;
+                margin-right: auto;
+                text-align: center;
+                align-items: center;
+            }
+
+        </style>
+    </head>
+    <body>
+        <header> 
+            <h2> Welcome to Robinhood Bot </h2>
+        </header>
+        <strong><ul class="menu">
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('analyze') }}">Analyze </a></li>
+            <li><a href="{{ url_for('prediction') }}"> Predict </a></li>
+            <li><a href="{{ url_for('trade') }}"> Trade </a></li>
+            <li style="float: right;">
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </li>
+        </ul></strong>
+
+        <div>
+            <h2>
+                About
+            </h2>
+            <p> 
+                This bot interacts with your Robinhood account and can help you make better trading decisions
+            </p>
+        </div>
+
+        <div class="row">
+            <div class="column">
+                <h2> Portfolio </h2>
+                {% if holdings %}
+                    {{holdings | safe}}
+                {% endif %} 
+            </div>
+            <div class="column">
+                <h2> Watchlist </h2>
+                <form action="" method="post" style="display: inline-block; padding-left: 40px;">
+                    <input type="text" placeholder="Ticker" name="add">
+                    <input class='btn btn-default' type="submit" value="Add">
+                </form>
+                <form action="" method="post" style="display: inline-block; padding-left: 40px;">
+                    <input type="text" placeholder="Ticker" name="remove">
+                    <input class='btn btn-default' type="submit" value="Remove">
+                </form>
+
+                {% if watchlist %}
+                    {{watchlist | safe}}
+                {% endif %} 
+            </div>
+        </div>
+    {% block content %}
+    {% endblock %}
+
+    </body>
+</html>

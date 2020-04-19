@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>
+            Log In
+        </title>
+    </head>
+    <body>
+        <div style="text-align: center;">
+            <h1> Welcome to the Robinhood bot </h1>
+            <br>
+
+            <p> To begin using, please log into your Robinhood account </p>
+            <form action="" method="post">
+                <input type="text" placeholder="Username" name="Email" value="{{
+                    request.form.Email}}"> <br>
+                <input type="text" placeholder="Password" name="Password" value="{{
+                    request.form.Password}}"> <br>
+                <input class='btn btn-default' type="submit" value="Login">
+            </form>
+            {% if error %}
+                <p class="error"><strong>Error:</strong> {{ error }}
+            {% endif %}
+        </div>
+    </body>
+</html>

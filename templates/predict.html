@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title> Robinhood Bot</title>
+        <style>
+            * {box-sizing: border-box;}
+            body {background-color:beige;}
+            header {
+                background-color:aquamarine;
+                padding: 30px;
+                text-align: center;
+                font-size: 25px;
+            }
+            ul {
+                list-style-type: none;
+                padding: 0;
+                margin: 0;
+                overflow: hidden;
+                background-color: #333;
+            }
+            li {
+                float: left;
+            }
+            li a {
+                display: block;
+                color: white;
+                text-align: center;
+                padding: 14px 16px;
+                text-decoration: none;
+            }
+            div {
+                text-align: center;
+                width: 100%;
+            }
+            #prediction {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+        </style>
+    </head>
+    <body>
+        <header> 
+            <h2> Welcome to Robinhood Bot </h2>
+        </header>
+        <strong><ul class="menu">
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('analyze') }}"> Analyze </a></li>
+            <li><a href="{{ url_for('prediction') }}"> Predict </a></li>
+            <li><a href="{{ url_for('trade') }}"> Trade </a></li>
+            <li style="float: right;">
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </li>
+        </ul></strong>
+
+    <div class= "container">
+        <div class="row" style="display: inline;">
+                    <form action="" method="post" style="display: inline-block;">
+                        <h3> Get a prediction for the future prices of a stock </h3>
+                        <input type="text" placeholder="Ticker" name="stock">
+                        <input type="text" placeholder="Days" name="days">
+                        <input class='btn btn-default' type="submit" value="Search"> &nbsp;
+                    </form> 
+        </div>
+        <div class="row" style="display: inline;">
+            {% if data %}
+            <h3>
+                {{request.form['stock'].upper()}}
+            </h3>
+            <h3>
+               Confidence with Regression: {{lr}}
+            </h3>
+                {{data | safe}}
+            {% endif %}  
+        </div>
+    </div>
+
+    {% block content %}
+    {% endblock %}
+
+    </body>
+</html>
