@@ -1,15 +1,9 @@
-'''
-app.py: drives the Flask web application, utilizes a robinhood object to give user access when
-necessary
-'''
-
 from flask import Flask, render_template, redirect, url_for, request
-from stock import *
-import robinhood
-import predict
 import random
-#import StringIO
+import pandas as pd
 import matplotlib.pyplot as plt
+
+import robinhood
 
 app = Flask('Robinhood') # initalize flask app
 user = robinhood.Robinhood() # user object
@@ -72,25 +66,7 @@ def home():
 '''
 @app.route('/analyze', methods=['GET', 'POST'])
 def analyze():
-    data = None
-    if request.method == 'POST':        
-        if request.form.get('stock') is not None:
-            data = get_data(request.form['stock'].upper())
-            data1 = pd.DataFrame(difference(request.form['stock'].upper()))
-            data2 = pd.DataFrame(pct_change(request.form['stock'].upper(), 'd'))
-            data3 = pd.DataFrame(pct_change(request.form['stock'].upper(), 'm'))
-            data4 = pd.DataFrame(pct_change(request.form['stock'].upper(), 'q'))
-            data5 = pd.DataFrame(daily_return(request.form['stock'].upper()))
-            data6 = pd.DataFrame(monthly_return(request.form['stock'].upper()))
-            data = pd.concat([data, data1, data5, data6, data2, data3, data4], axis=1)   
-            data.columns = ['Open', 'High', 'Low','Adj Close', 'Close', 'Volume', 'Difference',
-                            'Daily Return', 'Monthly Return', 'Daily % Change', 'Monthly % Change',
-                            'Quarterly % Change']
-            data = data.iloc[::-1]
-            data = data.drop(['Close', 'Volume', 'High', 'Low'], axis=1)
-            
-        if data is not None:
-            return render_template('analyze.html', data=data.to_html(table_id='results'))                           
+    data = None                         
     return render_template('analyze.html')
 
 
@@ -103,14 +79,8 @@ Users can enter the ticker for a particular stock and number of days
 @app.route('/predict', methods=['GET', 'POST'])
 def prediction():
     if request.method == 'POST':
-        stock = request.form.get('stock')
-        days = request.form.get('days')        
-        if request.form.get('stock') is not None and request.form.get('days') is not None:
-            data = pd.DataFrame(predict.predict_stock(stock.upper(), int(days))[0])
-            data.columns = ['Linear Regression']            
-            lr_conf = predict.predict_stock(stock.upper(), int(days))[1]
-                                            
-            return render_template('predict.html', data=data.to_html(table_id='prediction'), lr=lr_conf) 
+        pass
+    
     return render_template('predict.html')
 
 @app.route('/trade', methods=['GET', 'POST'])
