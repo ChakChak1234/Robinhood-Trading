@@ -8,78 +8,51 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVR
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import *
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn import metrics
 from sklearn.metrics import classification_report,confusion_matrix
 
 '''
-                        Historical Data
-        Feature1    Feature2    Feature3 ...    Target(y)
-T                                                   y1
-T+1                                                 y2
-T+2                                                 y3
-
-x -> ML Model -> Y
-
-            Predicted Y
-        x1      x2      x3      ....
-T                                                   
-T+1                                                 
-T+2                                                 
+Predicts daily adjusted closing price for a stock
 '''
-
-class LR:
+class Forecast:
     def __init__(self, data):
         self.data = data
-        
-    def predict(self):        
-        # get close price
+
+    # prediction is set as the last observed value
+    def last_value(self):
         df = self.data
-        df.iloc[:] = df.iloc[::-1].values
-        
-        
-        plt.plot(df['Date'], df['Adj Close'])
-        #plt.show()
 
-# classifies input data under optimal trading strategy
-class KNN:
-    def __init__(self,data):
-        self.data = data
-        self.momentum = Momentum(data)
-        self.reversion = Reversion(data)
+        # drop volume col
+        df.drop('Volume', axis=1, inplace=True)
 
-    def standardize(self):
-        df = self.data[['Open','Adj Close']]
+        # prediction column is set to adj close shifted up by 1 unit
+        df['Prediction'] = df['Adj Close'].shift(-1)
 
-        # set moving avg cross col
+        # drop last row
+        df = df[:-1]
+        return df
+
+    # prediction is set as the mean of the previous N values
+    # hyper param N will need to be tuned
+    def moving_average(self, n=2):
+        df = self.data
         close = df[['Adj Close']]
         avgs = []
         for i in range(0,len(close)):
-            avgs.append(moving_avg(close[i:],20))
-        df['20day MA'] = avgs
-        df = df.iloc[:len(df)-20]
-
-        # set turtle col
+            avgs.append(close[i:i+n].mean())
+        df['Prediction'] = np.array(avgs)
+        return df
         
-        # set mean reversion col
-        
-
-        print(df)
-        self.data = df
-    
-    def classify(self, neighbors=1):
+    # fit a linear regression model to the previous N values and use to predict the current adj close price
+    def linear_regression(self,n):        
         df = self.data
 
-# Multilayer Perceptron for computing buy/sell signals      
-class MLP:
-    def __init__(self,data):
-        self.data = data
-
 '''
-Believe movement of a stock will continue in its current direction
+Common trading strategies & ML algorithms that generate buy/sell signals
 '''
-class Momentum:
+# Believe movement of a stock will continue in its current direction
+class Signal:
     def __init__(self,data):
         self.data = data
     
@@ -114,13 +87,6 @@ class Momentum:
             res = 0
         print('Turtle:',res)
         return res
-            
-'''
-Follows belief that movement of a stock will eventually reverse
-'''
-class Reversion:
-    def __init__(self,data):
-        self.data = data
 
     # believe stocks return to their mean & you can exploit when it deviates from the mean
     def mean_reversion(self):
@@ -137,6 +103,7 @@ class Reversion:
             res = 0
         print('Mean Reversion:',res)
         return res
+    
 
 '''
 Utility Functions
@@ -157,39 +124,14 @@ def moving_avg(df, days):
 if __name__ == '__main__':
     data = 'historical_data/AAL.csv'
     data = pd.read_csv(data)
-    #print(data)
-    
+      
     # utilities
     #c = print(daily_pct(data))
     #avg = moving_avg(data,50)
 
-    # momentum
-    m = Momentum(data)
-    #m.dual_moving_avg_cross()
-    #m.turtle()
-    
-    # reversion
-    r = Reversion(data)
-    #r.mean_reversion()
-
-    # linear regression
-    lr = LR(data)
-    lr.predict()
-    
-    # support vector machine
-    #svm = SVM(data)
-    #svm.predict(1)
-    
-    # k nearest neighbors
-    knn = KNN(data)
-    #knn.standardize()
-    
-    '''# decision tree
-    dt = DecisionTree(data)
-    
-    # random forest
-    rf = RandomForest(data)
-    
-    # neural network
-    nn = NeuralNetwork(data)'''
+    # price forecasting
+    f = Forecast(data)
+    f.last_value()
+    f.moving_average(5)
+    f.linear_regression(5)
     
