@@ -49,7 +49,6 @@
                 margin-right: auto;
                 text-align: center;
                 align-items: center;
-
             }
 
             #watchlist {
@@ -67,22 +66,12 @@
         </header>
         <strong><ul class="menu">
             <li><a href="{{ url_for('home') }}">Home</a></li>
-            <li><a href="{{ url_for('analyze') }}">Analyze </a></li>
             <li><a href="{{ url_for('prediction') }}"> Predict </a></li>
             <li><a href="{{ url_for('trade') }}"> Trade </a></li>
             <li style="float: right;">
                 <a href="{{ url_for('logout') }}">Logout</a>
             </li>
         </ul></strong>
-
-        <div>
-            <h2>
-                About
-            </h2>
-            <p> 
-                This bot interacts with your Robinhood account and can help you make better trading decisions
-            </p>
-        </div>
 
         <div class="row">
             <div class="column">
@@ -93,15 +82,6 @@
             </div>
             <div class="column">
                 <h2> Watchlist </h2>
-                <form action="" method="post" style="display: inline-block; padding-left: 40px;">
-                    <input type="text" placeholder="Ticker" name="add">
-                    <input class='btn btn-default' type="submit" value="Add">
-                </form>
-                <form action="" method="post" style="display: inline-block; padding-left: 40px;">
-                    <input type="text" placeholder="Ticker" name="remove">
-                    <input class='btn btn-default' type="submit" value="Remove">
-                </form>
-
                 {% if watchlist %}
                     {{watchlist | safe}}
                 {% endif %} 
