@@ -5,23 +5,12 @@ import robin_stocks as rs
 import yfinance as yf
 import pandas as pd
 import numpy as np
-import db
-from predict import * 
-
-import pymysql
-from sqlalchemy import create_engine
 
 class Robinhood:
     username = None
     password = None
     auth_token = None
     refresh_token = None
-    
-    # database
-    client_id = "c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS"
-    sql_engine = create_engine('mysql+pymysql://root:zach@localhost/stocks')
-    connection = sql_engine.connect()
-    db = db.Database('stocks')
     
     def __init__(self):
         self.device_token = self.GenerateDeviceToken() # generate device token upon initialization
@@ -102,19 +91,25 @@ class Robinhood:
     Takes a ticker and writes historical data to csv file named after the stock
     returns a dataframe of historical data
     '''
-    def get_historicals(self, stock):
-        df = yf.download(stock, period='2y')
-        
+    def get_historicals(self, stock, end=None):
+        if end:
+            df = yf.download(stock, period='2y',end=end)
+        else:
+            df = yf.download(stock, period='2y')
         # reverse indicies so dates are in decsending order
-        df = df.iloc[::-1]
+        #df = df.iloc[::-1]
+        df.dropna(inplace=True)
         
         # set type of date,open,close,high,low cols
         df = df.astype({'Open':'float64', 'Close':'float64', 'High':'float64', 'Low':'float64', 'Adj Close':'float64', 'Volume':'int64'})
         df = df.round(2)
         
         # write df to csv file
-        df.to_csv('historical_data/' + stock[0] + '.csv',index=True)
+        df = df.iloc[:-3]
+        df.to_csv('historical_data/' + stock + '.csv',index=True)
+
         return df
+
     '''
     Updates holdings database table and returns users portfolio as dataframe
     '''
@@ -139,14 +134,14 @@ class Robinhood:
         df['Quantity'] = df['Quantity'].astype('int64')
 
         # write df to holdings table in MySQL db
-        df.to_sql('holdings', con=self.connection, if_exists='replace')
+        #df.to_sql('holdings', con=self.connection, if_exists='replace')
         return df
     
     '''
     Updates watchlist database table and returns users watchlist as dataframe
     '''
     def get_watchlist(self):
-        holdings = pd.read_sql('SELECT * FROM stocks.holdings', con=self.connection)
+        holdings = self.get_holdings()
         df = {} # dictionary to create watchlist dataframe
         tickers = []
         
@@ -172,23 +167,13 @@ class Robinhood:
         df = df.astype({'Price':'float64'})
         
         # write df to watchlist table in MySQL db
-        df.to_sql('watchlist', con=self.connection, if_exists='replace')
-        return df
-    
-    '''
-    Updates watchlist & holdings dataframes with buy/sell signals based on the input strategy
-    '''
-    def signal(self, strategy=None):
-        # Add signal col to watchlist & holdings dataframes, set to false
-        holdings = pd.read_sql('SELECT * FROM stocks.holdings', con=self.connection)
-        holdings['Sell'] = False
-        watchlist = pd.read_sql('SELECT * FROM stocks.watchlist', con=self.connection)  
-        watchlist['Buy'] = False
-        print(watchlist, holdings)        
+        #df.to_sql('watchlist', con=self.connection, if_exists='replace')
+        return df      
         
 if __name__ == '__main__':
     client = Robinhood()
     client.login('', '')
     h = client.get_holdings()
     w = client.get_watchlist()
-    client.signal()
+
+    
