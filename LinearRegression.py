@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 from utilities import *
+from robinhood import *
+
+client = Robinhood()
 
 # y = B0 + B1*x1 + ... + Bn*xn
 class LinearRegression:
@@ -14,8 +17,8 @@ class LinearRegression:
 
     def prep(self):
         df = self.data
-        df = df.iloc[5:]
         self.cols.remove('Adj Close')
+        self.cols.remove('Close')
         self.x = df[self.cols] # set x as predictors
         self.y = df['Adj Close'] # set y as target col
     
@@ -29,10 +32,10 @@ class LinearRegression:
         x = self.x
         y = self.y
 
-        x_train = x.iloc[:300].to_numpy()
-        y_train = y.iloc[:300].to_numpy()
-        x_test = x.iloc[300:].to_numpy()
-        y_test = y.iloc[300:].to_numpy()
+        x_train = x.iloc[:-14].to_numpy()
+        y_train = y.iloc[:-14].to_numpy()
+        x_test = x.iloc[-14:].to_numpy()
+        y_test = y.iloc[-14:].to_numpy()
 
         return x_train,y_train,x_test,y_test
 
@@ -44,6 +47,7 @@ class LinearRegression:
     def fit(self,x,y):
         # add col of ones to x matrix
         x = self.ones(x)
+        
         # generate coeficients 
         coef = np.linalg.inv(x.transpose().dot(x)).dot(x.transpose()).dot(y)
         self.coef = coef
@@ -64,20 +68,16 @@ class LinearRegression:
         x_test = pd.DataFrame(x_test,columns=self.cols)
         x_test['Actual Price'] = y_test
         x_test['Prediction'] = predictions
-        x_test.index = self.x.index[300:]
-        #print(x_test)
+        x_test.index = self.x.index[-14:]
+        print(x_test)
         return x_test
         
 if __name__ == '__main__':
-    data = 'historical_data/AAL.csv'
-    df = pd.read_csv(data)
-    df['Daily % Change'] = daily_pct_change(df)
-    df['5day SMA'] = simple_moving_avg(df,5)
-    df['5day EMA'] = exp_moving_average(df,5)
-    df.drop(['Close'],axis=1,inplace=True)
-    df.set_index('Date',inplace=True)
-
-    lr  = LinearRegression(df)
-    x_train,y_train,x_test,y_test = lr.train_test_split()
-    lr.fit(x_train,y_train)
-    lr.predict(x_test,y_test)
+    stocks = ['DIS', 'MSFT', 'BAC', 'SNAP', 'UBER']
+    df = client.get_historicals('DIS')
+    
+    model = LinearRegression(df)
+    x_train,y_train,x_test,y_test = model.train_test_split()
+    model.fit(x_train,y_train)
+    model.predict(x_test,y_test)
+    

@@ -91,22 +91,23 @@ class Robinhood:
     Takes a ticker and writes historical data to csv file named after the stock
     returns a dataframe of historical data
     '''
-    def get_historicals(self, stock, end=None):
+    def get_historicals(self, stock, period='2y', end=None):
         if end:
-            df = yf.download(stock, period='2y',end=end)
+            df = yf.download(stock, period=period,end=end)
         else:
-            df = yf.download(stock, period='2y')
-        # reverse indicies so dates are in decsending order
-        #df = df.iloc[::-1]
+            df = yf.download(stock, period=period)
+
+        # remove null values
         df.dropna(inplace=True)
         
         # set type of date,open,close,high,low cols
         df = df.astype({'Open':'float64', 'Close':'float64', 'High':'float64', 'Low':'float64', 'Adj Close':'float64', 'Volume':'int64'})
-        df = df.round(2)
+        
+        # round values to 3 decimal places
+        df = df.round(3)
         
         # write df to csv file
-        df = df.iloc[:-3]
-        df.to_csv('historical_data/' + stock + '.csv',index=True)
+        #df.to_csv('historical_data/' + stock + '.csv',index=True)
 
         return df
 
