@@ -1,9 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-'''
-Metrics
-'''
+
 # Calculates the daily percentage change in price of a stock, returns df with daily % change cl
 def daily_pct_change(df):
     close = df[['Adj Close']]
@@ -65,11 +63,13 @@ def exp_moving_average(df,days):
     ema = ema.round(2)
     return ema
 
+############## INDICATORS ############## 
 '''
-Indicators
+moving average convergence divergence
+- MACD line: Subtract the stocks 26day EMA from the 12day EMA
+- Signal line: Calculate 9day EMA of the MACD line
+Returns BUY signal if MACD line crosses above signal line and SELL signal if crosses below
 '''
-# moving average convergence divergence
-# buy signal if macd line crosses above signal line, sell if crosses below
 def macd(df):
     # 12 and 26 day exponential moving averages
     ema12 = exp_moving_average(df,12)
@@ -94,10 +94,15 @@ def macd(df):
     res['Signal'] = signal
     return res
 
-# returns buy signal if 50day MA crosses above 200day MA, false otherwise
+'''
+Returns buy signal if 50day MA crosses above 200day MA, false otherwise
+'''
 def golden_cross(df):
+    # 50 and 200 day moving averages
     fifty_day = simple_moving_avg(df,50).iloc[-1]
     two_hun_day = simple_moving_avg(df,200).iloc[-1]
+
+    # check for crossover
     if fifty_day <= two_hun_day:
         return False
     else:
@@ -134,7 +139,11 @@ def boiler_bands(df):
     #plt.show()
     return df
 
-# relative strength index
+'''
+relative strength index
+- momentum indicator that measures the magnitude of recent price changes to evaluate overbought
+or oversold stock price conditions
+'''
 def RSI(df,periods=14):
     df = df.reset_index()
     df = df.iloc[-periods-1:]
@@ -152,9 +161,29 @@ def RSI(df,periods=14):
     rsi = round(100 - (100/(1 + (avg_gain/avg_loss))),3)
     return rsi
 
-# money flow index
-def MFI(df):
-    pass
+'''
+money flow index
+- oscillator (0...100) that uses price & volume features to indentify overbought or oversold signals for an asset
+- used to identify divergences which indicate price trend changes
+'''
+'''def MFI(df):
+    df = df.reset_index()
+    df = df.iloc[-14:]
+    df['Typical Price'] = (df['High'] + df['Low'] + df['Close'])/3
+    df['Money Flow Positive?'] = df['Typical Price'] >= df['Typical Price'].shift(1)
+    df['Raw Money Flow'] = df.apply(lambda x: x['Typical Price']*x['Volume']*-1 if x['Money Flow Positive?'] is False else x['Typical Price']*x['Volume'],axis=1)    
+    pos_flow,neg_flow = 0,0
+    for i in list(df['Raw Money Flow']):
+        if i < 0:
+            neg_flow += i
+        else:
+            pos_flow += i
+    
+    flow_ratio = pos_flow/neg_flow
+    
+    mfi = 100 - (100/(1 + flow_ratio))
+    print(mfi)
+    return mfi'''
 
 # buy on 20day high and sell on 20day low
 def turtle(df):

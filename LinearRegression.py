@@ -51,7 +51,24 @@ class LinearRegression:
         # generate coeficients 
         coef = np.linalg.inv(x.transpose().dot(x)).dot(x.transpose()).dot(y)
         self.coef = coef
-
+        
+    def cost_function(self,x,y,beta):
+        n = len(y)
+        preds = x.dot(beta)
+        j = (1/2*n) * np.sum(np.square(preds-y))
+        return j
+        
+    def gradient_descent(self,x,y,beta,rate=0.01,iterations=1000):
+        n = len(y)
+        cost_hist = np.zeros(iterations)
+        beta_hist = np.zeros((iterations,2))
+        for i in range(iterations):
+            pred = np.dot(x,beta)
+            beta -= (1/n) * rate * (x.transpose().dot((pred-y)))
+            beta_hist[i,:] = beta.transpose()
+            cost_hist[i] = self.cost_function(x,y,beta)
+        return beta,cost_hist,beta_hist
+    
     def predict(self,x_test,y_test):
         predictions = []
 
@@ -78,6 +95,8 @@ if __name__ == '__main__':
     
     model = LinearRegression(df)
     x_train,y_train,x_test,y_test = model.train_test_split()
-    model.fit(x_train,y_train)
-    model.predict(x_test,y_test)
     
+    betas = np.random.randn(2,1)
+    x_b = np.c_[np.ones((len(x_train),1)),x_train]
+    b,chist,bhist = model.gradient_descent(x_b,y_train,betas)
+    print(b)
