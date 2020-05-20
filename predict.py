@@ -102,5 +102,5 @@ if __name__ == '__main__':
     #gc = golden_cross(df)
     #bb = boiler_bands(df)
     #rsi = RSI(df)
-    mfi = MFI(df)
+    #mfi = MFI(df)
     #turtle = turtle(df)
