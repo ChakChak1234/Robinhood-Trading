@@ -32,12 +32,6 @@ class DecisionTree:
         else:
             print('%s[%s]' % (depth*' ',node))
 
-    # computes accuract percentage for the tree
-    def accuracy_metric(self,data):
-        score = sum(data['14day Profit'] == data['Prediction'])
-        score = round(score * 100/len(data), 2)
-        return score
-
     def cost_function(self,groups):
         inst = float(sum([len(group) for group in groups]))
         cost = 0.0
@@ -45,8 +39,8 @@ class DecisionTree:
             size = len(group)
             if size == 0:
                 continue
-            y = sum(group['14day Profit'] == True)/size
-            n = sum(group['14day Profit'] == False)/size
+            y = sum(group['Indicator'] == True)/size
+            n = sum(group['Indicator'] == False)/size
             cost += (1-(math.pow(y,2) + math.pow(n,2))) * (size/inst)
         cost = round(cost,5)
         return cost

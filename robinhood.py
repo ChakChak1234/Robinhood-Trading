@@ -65,6 +65,25 @@ class Robinhood:
         return logout
     
     '''
+    returns a list of current prices for input stocks
+    '''
+    def get_prices(self, stocks):
+        p = [round(float(i),2) for i in rs.get_latest_price(stocks)]
+        return p
+    
+    '''
+    input: list of ticker symbols
+    out: list of names corresponding to the input list
+    '''
+    def get_names(self, stocks):
+        temp = rs.get_instruments_by_symbols(stocks)
+        names = []
+        for t in temp:
+            if t is not None:
+                names.append(t.get('name'))
+        return names
+    
+    '''
     Takes a ticker and writes historical data to csv file named after the stock
     returns a dataframe of historical data
     '''
@@ -104,12 +123,19 @@ class Robinhood:
                 temp = item.findAll('span')
                 i += 1   
             tickers.append(temp[0].text)
-
-        print(tickers)
-        return tickers
+             
+        names = self.get_names(tickers)
+        prices = self.get_prices(tickers)
+        df = pd.DataFrame({'Ticker': tickers, 'Name': names, 'Price':prices, 'Collection':url[34:]})
+        df.to_sql('collections',con=self.database.connection,if_exists='append',index=False)
+        return df
         
 if __name__ == '__main__':
     client = Robinhood()
-    #client.login('', '')
-    client.get_collection('https://robinhood.com/collections/100-most-popular')
+    client.login('zloeffler22@gmail.com', 'Zach4268!12')
+
+    url = 'https://robinhood.com/collections/'
+    cols = ['100-most-popular','new-on-robinhood','technology','finance','energy','pharmaceutical']
+    for i in cols:
+        client.get_collection(url + i)
     

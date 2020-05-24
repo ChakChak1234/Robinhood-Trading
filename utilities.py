@@ -6,13 +6,12 @@ import matplotlib.pyplot as plt
 def daily_pct_change(df):
     close = df[['Adj Close']]
     change = close.pct_change()
-    change.fillna(0,inplace=True)
+    change.dropna(inplace=True)
     df['Daily % Change'] = change
     return change
 
 # calculates weekly percentage change in a stocks price
 def weekly_pct_change(df):
-    df['Date'] = pd.to_datetime(df['Date'], yearfirst=True)
     end = df['Adj Close'].iloc[-1]
     start = df['Adj Close'].iloc[-6]
     change = round((end-start)/start,3)
@@ -20,8 +19,6 @@ def weekly_pct_change(df):
 
 # calculates monthly percentage change in a stocks price
 def monthly_pct_change(df):
-    df['Date'] = pd.to_datetime(df['Date'], yearfirst=True)
-    df = df.set_index('Date')
     df = df['Adj Close'].resample('BM').last()
     start = df[-2]
     end = df[-1]
@@ -31,23 +28,6 @@ def monthly_pct_change(df):
 # calculates daily return for a stock
 def daily_return(df):
     ret = df['Close'] - df['Open']
-    return ret
-
-# calculates weekly return for a stock
-def weekly_return(df):
-    end = df['Adj Close'].iloc[-1]
-    start = df['Adj Close'].iloc[-6]
-    ret = round(end-start,2)
-    return ret
-
-# calculates monthly return for a stock
-def monthly_return(df):
-    #df['Date'] = pd.to_datetime(df['Date'], yearfirst=True)
-    #df = df.set_index('Date')
-    df = df['Adj Close'].resample('BM').last()
-    start = df[-2]
-    end = df[-1]
-    ret = round(end-start,3)
     return ret
 
 # computes the simple moving average of a stock over the specified days
@@ -91,7 +71,8 @@ def macd(df):
     
     # put results in dataframe
     res = mac
-    res['Signal'] = signal
+    res['Signal Line'] = signal
+    res['Indicator'] = res['Adj Close'] > res['Signal Line']
     return res
 
 '''
@@ -101,7 +82,7 @@ def golden_cross(df):
     # 50 and 200 day moving averages
     fifty_day = simple_moving_avg(df,50).iloc[-1]
     two_hun_day = simple_moving_avg(df,200).iloc[-1]
-
+    print(fifty_day,two_hun_day)
     # check for crossover
     if fifty_day <= two_hun_day:
         return False
@@ -137,6 +118,8 @@ def boiler_bands(df):
     plt.fill_between(df['Date'],df['Lower'],df['Upper'],color='y')
     plt.legend(loc='upper left')
     #plt.show()
+    
+    df.set_index('Date')
     return df
 
 '''
@@ -144,46 +127,23 @@ relative strength index
 - momentum indicator that measures the magnitude of recent price changes to evaluate overbought
 or oversold stock price conditions
 '''
-def RSI(df,periods=14):
-    df = df.reset_index()
+def relative_strength_index(df,periods=14):
     df = df.iloc[-periods-1:]
     df = df[['Date','Adj Close']]
     df['Prev'] = df['Adj Close'].shift(1)
     df.dropna(inplace=True)
     
-    df['Diff'] = df['Adj Close'] - df['Prev']
-    df['Gain'] = df.apply(lambda x: x['Diff'] if x['Diff'] > 0 else 0,axis=1)
-    df['Loss'] = df.apply(lambda x: x['Diff']*-1 if x['Diff'] < 0 else 0,axis=1)
+    df['Diff'] = df['Prev']-df['Adj Close']
+    df['Gain'] = df['Diff']
+    df['Loss'] = df['Diff']
+    df['Gain'][df['Gain'] < 0] = 0
+    df['Loss'][df['Loss'] > 0] = 0
     
     avg_gain = df['Gain'].sum()/periods
     avg_loss = df['Loss'].sum()/periods
     
     rsi = round(100 - (100/(1 + (avg_gain/avg_loss))),3)
     return rsi
-
-'''
-money flow index
-- oscillator (0...100) that uses price & volume features to indentify overbought or oversold signals for an asset
-- used to identify divergences which indicate price trend changes
-'''
-'''def MFI(df):
-    df = df.reset_index()
-    df = df.iloc[-14:]
-    df['Typical Price'] = (df['High'] + df['Low'] + df['Close'])/3
-    df['Money Flow Positive?'] = df['Typical Price'] >= df['Typical Price'].shift(1)
-    df['Raw Money Flow'] = df.apply(lambda x: x['Typical Price']*x['Volume']*-1 if x['Money Flow Positive?'] is False else x['Typical Price']*x['Volume'],axis=1)    
-    pos_flow,neg_flow = 0,0
-    for i in list(df['Raw Money Flow']):
-        if i < 0:
-            neg_flow += i
-        else:
-            pos_flow += i
-    
-    flow_ratio = pos_flow/neg_flow
-    
-    mfi = 100 - (100/(1 + flow_ratio))
-    print(mfi)
-    return mfi'''
 
 # buy on 20day high and sell on 20day low
 def turtle(df):
@@ -197,9 +157,7 @@ def turtle(df):
     high = df['Adj Close'].max()
     low = df['Adj Close'].min()
     
-    if curr_price >= high:
-        return 'Buy'
-    elif curr_price <= low:
-        return 'Sell'
+    if curr_price > high:
+        return True
     else:
-        return None
+        return False
