@@ -30,18 +30,14 @@ def daily_return(df):
     ret = df['Close'] - df['Open']
     return ret
 
-# computes the simple moving average of a stock over the specified days
-def simple_moving_avg(df, days):
-    sma = df['Adj Close'].rolling(window=days).mean()
-    sma.dropna(inplace=True)
-    sma = sma.round(2)
-    return sma
+def simple_moving_avg(df,n):
+    sma = df['Adj Close'].rolling(window=n).mean()
+    sma = sma.fillna(0)
+    return sma.round(2)
 
-# computes the exponential moving average of a stock over the specified days
-def exp_moving_average(df,days):
-    ema = df['Adj Close'].ewm(span=days,adjust=False).mean()
-    ema = ema.round(2)
-    return ema
+def exponential_moving_average(df,n):
+    exp = df['Adj Close'].ewm(span=n,adjust=False).mean()
+    return exp.round(2)    
 
 ############## INDICATORS ############## 
 '''
@@ -52,8 +48,8 @@ Returns BUY signal if MACD line crosses above signal line and SELL signal if cro
 '''
 def macd(df):
     # 12 and 26 day exponential moving averages
-    ema12 = exp_moving_average(df,12)
-    ema26 = exp_moving_average(df,26)
+    ema12 = exponential_moving_average(df,12)
+    ema26 = exponential_moving_average(df,26)
      
     # create macd line
     mac = ema12-ema26
@@ -80,19 +76,18 @@ Returns buy signal if 50day MA crosses above 200day MA, false otherwise
 '''
 def golden_cross(df):
     # 50 and 200 day moving averages
-    fifty_day = simple_moving_avg(df,50).iloc[-1]
-    two_hun_day = simple_moving_avg(df,200).iloc[-1]
-    print(fifty_day,two_hun_day)
+    fifty_day = simple_moving_avg(df,50)
+    two_hun_day = simple_moving_avg(df,200)
+  
     # check for crossover
-    if fifty_day <= two_hun_day:
-        return False
+    if fifty_day.iloc[-1] <= two_hun_day.iloc[-1]:
+        return -1
     else:
-        return True
+        return 1
 
 # Closer to upperband means market is more overbought, closer to lower band means market more oversold
 def boiler_bands(df):
     df = df.reset_index()
-    df = df[['Date','Adj Close']]
     
     # calculate 20day sma and standard deviation
     sma = df.rolling(window=20).mean()
@@ -129,7 +124,6 @@ or oversold stock price conditions
 '''
 def relative_strength_index(df,periods=14):
     df = df.iloc[-periods-1:]
-    df = df[['Date','Adj Close']]
     df['Prev'] = df['Adj Close'].shift(1)
     df.dropna(inplace=True)
     
@@ -138,26 +132,10 @@ def relative_strength_index(df,periods=14):
     df['Loss'] = df['Diff']
     df['Gain'][df['Gain'] < 0] = 0
     df['Loss'][df['Loss'] > 0] = 0
+    df['Loss'] = df['Loss'] * -1
     
     avg_gain = df['Gain'].sum()/periods
     avg_loss = df['Loss'].sum()/periods
     
     rsi = round(100 - (100/(1 + (avg_gain/avg_loss))),3)
     return rsi
-
-# buy on 20day high and sell on 20day low
-def turtle(df):
-    df = df.reset_index()
-    df = df[['Date','Adj Close']]
-    curr_price = df['Adj Close'].iloc[-1]
-    
-    df = df.iloc[:-1]
-    df = df.iloc[-20:]
-    
-    high = df['Adj Close'].max()
-    low = df['Adj Close'].min()
-    
-    if curr_price > high:
-        return True
-    else:
-        return False

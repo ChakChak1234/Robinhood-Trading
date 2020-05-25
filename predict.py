@@ -18,28 +18,6 @@ class Forecast:
     def __init__(self, data):
         self.data = data
         self.results = pd.DataFrame()
-        
-    # predicted price is set as previous days closing price
-    def last_value(self):
-        df = self.data
-
-        # prediction column is set to adj close shifted up by 1 unit
-        df['Predicted Price'] = df['Adj Close'].shift(1)
-        df = df.rename(columns={'Adj Close': 'Actual Price'})
-        
-        # drop first row
-        df.drop(df.iloc[0])
-        
-        return df
-
-    # prediction is set as the mean of the previous n values
-    def moving_average(self, n=2):
-        df = self.data
-        
-        df['Predicted Price'] = exp_moving_average(df,n)
-        df = df.rename(columns={'Adj Close': 'Actual Price'})
-
-        return df
     
     # performs multiple linear regression to forecast stock prices and up/down trends
     def linear_regression(self): 
@@ -81,24 +59,38 @@ class Signal:
         df = pd.read_sql(query,con=client.database.connection)
         df.set_index('Ticker',inplace=True)
         tickers = list(df.index)
-        rsi,gc,turt = [],[],[]
-        for t in tickers:
-            temp = client.get_historicals(t)
-            temp = temp.reset_index()
         
+        rsi,gc,start_prices,future_prices = [],[],[],[]
+        future_date = '2020-05-08'
+        for t in tickers:
+            temp = client.get_historicals(t,end=end)       
+            future_prices.append(temp.loc[future_date,'Adj Close'])
+            
+            temp = temp.loc[:end,:]
+            start_prices.append(temp.loc[end,'Adj Close'])
+            
             rsi.append(relative_strength_index(temp))
             gc.append(golden_cross(temp))
-            turt.append(turtle(temp))    
+            df.loc[t,'Weekly % Change'] = weekly_pct_change(temp)
+            df.loc[t,'Monthly % Change'] = monthly_pct_change(temp)
             
-        
-        print(len(rsi),len(gc),len(turt))
+        df['Start Price'] = start_prices
+        df['End Price'] = future_prices
         df['RSI'] = rsi
         df['Golden Cross'] = gc
-        df['Turtle'] = turt
-        print(df)
+        df['Actual Signal'] = df['End Price'] > df['Start Price']
+        df.drop(['Start Price','End Price'],axis=1,inplace=True)
+        df.to_csv('decision-tree-data/test1.csv')
+        return df
+    
     def decision_tree(self):
-        pass
+        #end = '2020-05-04'
+        #df = self.create_features(end=end)
+        df = pd.read_csv('decision-tree-data/test1.csv',index_col='Ticker')
 
+        model = DecisionTree()
+        model.partition(df)
+        model.gini_index(df)        
 if __name__ == '__main__':
     q = 'SELECT * FROM stocks.collections WHERE Collection = "100-most-popular"'
     df = pd.read_sql(q,con=client.database.connection)
@@ -148,4 +140,4 @@ if __name__ == '__main__':
     
     # Decision Tree
     s = Signal()
-    s.create_features()
+    s.decision_tree()
