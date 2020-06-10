@@ -113,11 +113,13 @@ class Signal:
 if __name__ == '__main__':
     q = 'SELECT * FROM stocks.collections WHERE Collection = "100-most-popular"'
     df = pd.read_sql(q,con=client.database.connection)
-    tickers = list(df['Ticker'])
-    end = '2020-06-05'
+    df.set_index('Ticker',inplace=True)
+    df.to_csv('100-most-popular.csv')
     
-    df = client.get_historicals(tickers[0])
-    df = df.loc[:end,:]
+    #tickers = list(df['Ticker'])
+    #end = '2020-06-05'
+    #df = client.get_historicals(tickers[0])
+    #df = df.loc[:end,:]
     
     # utilites
     #ret = daily_return(df)
