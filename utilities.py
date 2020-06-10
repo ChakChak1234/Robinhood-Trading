@@ -2,49 +2,40 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Calculates the daily percentage change in price of a stock, returns df with daily % change cl
-def daily_pct_change(df):
-    close = df[['Adj Close']]
-    change = close.pct_change()
-    change.dropna(inplace=True)
-    df['Daily % Change'] = change
-    return change
-
-# calculates weekly percentage change in a stocks price
-def weekly_pct_change(df):
-    end = df['Adj Close'].iloc[-1]
-    start = df['Adj Close'].iloc[-6]
-    change = round((end-start)/start,3)
-    return change
-
-# calculates monthly percentage change in a stocks price
-def monthly_pct_change(df):
-    df = df['Adj Close'].resample('BM').last()
-    start = df[-2]
-    end = df[-1]
-    change = round((end-start)/start,3)
-    return change
-
-# calculates daily return for a stock
+'''
+params: dataframe of historical data for a stock
+returns: dataframe of day-to-day profit/loss
+'''
 def daily_return(df):
     ret = df['Close'] - df['Open']
     return ret
 
-def simple_moving_avg(df,n):
-    sma = df['Adj Close'].rolling(window=n).mean()
-    sma = sma.fillna(0)
+'''
+params: df = dataframe of historical data for a stock, days = window to compute the moving average
+returns: dataframe of simple moving averages
+'''
+def simple_moving_avg(df,days):
+    sma = df['Adj Close'].rolling(window=days).mean()
+    sma.fillna(0)
     return sma.round(2)
 
-def exponential_moving_average(df,n):
-    exp = df['Adj Close'].ewm(span=n,adjust=False).mean()
+'''
+params: df = dataframe of historical data for a stock, days = window to compute the moving average
+returns: dataframe of exponential moving averages
+'''
+def exponential_moving_average(df,days):
+    exp = df['Adj Close'].ewm(span=days,adjust=False).mean()
     return exp.round(2)    
+
 
 ############## INDICATORS ############## 
 '''
 moving average convergence divergence
 - MACD line: Subtract the stocks 26day EMA from the 12day EMA
 - Signal line: Calculate 9day EMA of the MACD line
-Returns BUY signal if MACD line crosses above signal line and SELL signal if crosses below
+
+Params: dataframe of historical data for a stock
+Returns: BUY signal if MACD line crosses above signal line and SELL signal if crosses below
 '''
 def macd(df):
     # 12 and 26 day exponential moving averages
@@ -72,20 +63,38 @@ def macd(df):
     return res
 
 '''
-Returns buy signal if 50day MA crosses above 200day MA, false otherwise
+Models the golden cross strategy which generates a buy signals if a stocks short-term moving average crosses above its long term moving-average
+params: df = dataframe of historical data for a stock, short = window for short-term moving average, long = window for long-term moving average
+returns: list of signals corresponding to each day
 '''
-def golden_cross(df):
-    # 50 and 200 day moving averages
-    fifty_day = simple_moving_avg(df,50)
-    two_hun_day = simple_moving_avg(df,200)
-  
-    # check for crossover
-    if fifty_day.iloc[-1] <= two_hun_day.iloc[-1]:
-        return -1
-    else:
-        return 1
+def golden_cross(df,short,long):    
+    # short and long term moving averages
+    short_term = list(simple_moving_avg(df,short))
+    long_term = list(simple_moving_avg(df,long))
+   
+    # set columns
+    columns = [str(short) + 'Day MA', str(long) + 'Day MA']
 
-# Closer to upperband means market is more overbought, closer to lower band means market more oversold
+    # resultant dataframe
+    result = pd.DataFrame([short_term,long_term])
+    result = result.T
+    result.dropna(inplace=True)
+    result.columns = columns
+    
+    # generate and return signals
+    result['Signal'] = result[str(short) + 'Day MA'] > result[str(long) + 'Day MA']
+    return list(result['Signal'])
+    
+
+'''
+Models the Bollinger Bands indicator which provides information regarding price volatility. 
+Consists of 3 bands:
+- middle: 20day simple moving average
+- upper/lower: 2 standard deviations away from the middle band
+
+params: dataframe of historical data
+returns: df containing the middle, upper and lower bands
+'''
 def boiler_bands(df):
     df = df.reset_index()
     
@@ -114,13 +123,14 @@ def boiler_bands(df):
     plt.legend(loc='upper left')
     #plt.show()
     
-    df.set_index('Date')
+    df.set_index('Date',inplace=True)
     return df
 
 '''
-relative strength index
-- momentum indicator that measures the magnitude of recent price changes to evaluate overbought
-or oversold stock price conditions
+Momentum indicator that measures the magnitude of recent price changes to evaluate overbought or oversold stock price conditions
+
+params: df = dataframe of historical data for a stock, periods = number of days to compute the RSI
+returns: (int) RSI for a stock
 '''
 def relative_strength_index(df,periods=14):
     df = df.iloc[-periods-1:]

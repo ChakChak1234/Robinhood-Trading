@@ -40,10 +40,6 @@ class Forecast:
         res.index = df.loc[s:].index
         return res
         
-    # calculates rmse for each type of prediction strategy and writes results to 'LR Results/error.csv'
-    def lr_eval(self):
-        pass
-        
 '''
 Common trading strategies & ML algorithms that generate buy signals and predict a stocks return 14days ahead
 '''
@@ -63,32 +59,32 @@ class Signal:
         df.set_index('Ticker',inplace=True)
         tickers = list(df.index)
         
-        # 
-        future_date = '2020-05-08'
+        # start and ending dates for training data
+        start_date = '2020-01-01'
+        end_date = '2020-02-29'
         
-        rsi,gc,start_prices,future_prices = [],[],[],[]
+        rsi,start_prices,future_prices = [],[],[]
         for t in tickers:
-            temp = client.get_historicals(t,end=end)       
-            future_prices.append(temp.loc[future_date,'Adj Close'])
+            temp = client.get_historicals(t)     
+            temp = temp.loc[start_date:end_date,:]
             
-            temp = temp.loc[:end,:]
+            future_prices.append(temp.loc[end_date,'Adj Close'])
             start_prices.append(temp.loc[end,'Adj Close'])
             
             rsi.append(relative_strength_index(temp))
-            gc.append(golden_cross(temp))
-            df.loc[t,'Weekly % Change'] = weekly_pct_change(temp)
-            df.loc[t,'Monthly % Change'] = monthly_pct_change(temp)
-            
+            #df.loc[t,'Weekly % Change'] = weekly_pct_change(temp)
+            #df.loc[t,'Monthly % Change'] = monthly_pct_change(temp)
+        
+        print(temp)
         df['Start Price'] = start_prices
         df['End Price'] = future_prices
         df['RSI'] = rsi
-        df['Golden Cross'] = gc
         df['Actual Signal'] = df['End Price'] > df['Start Price']
         print(df)
         df.drop(['Start Price','End Price'],axis=1,inplace=True)
         #df.to_csv('decision-tree-data/test1.csv')
         return df
-    
+        
     def decision_tree(self):
         max_depth = 10
         min_size = 1
@@ -97,7 +93,8 @@ class Signal:
         df.drop('Golden Cross',axis=1,inplace=True)
         
         train = df
-       
+        test = df
+        
         model = DecisionTree(max_depth)
         tree = model.build_tree(train,min_size)        
         
@@ -117,52 +114,42 @@ if __name__ == '__main__':
     q = 'SELECT * FROM stocks.collections WHERE Collection = "100-most-popular"'
     df = pd.read_sql(q,con=client.database.connection)
     tickers = list(df['Ticker'])
+    end = '2020-06-05'
     
     df = client.get_historicals(tickers[0])
-   
+    df = df.loc[:end,:]
+    
     # utilites
-    '''
-    dpc = daily_pct_change(df)
-    print(dpc) # df
+    #ret = daily_return(df)
+    #print(ret)
     
-    wpc = weekly_pct_change(df)
-    print(wpc) # float
+    #sma = simple_moving_avg(df,20)
+    #print(sma) # df
     
-    mpc = monthly_pct_change(df)
-    print(mpc) # float
-    
-    sma = simple_moving_avg(df,20)
-    print(sma) # df
-    
-    ema = exp_moving_average(df,20)
-    print(ema) # df
+    #ema = exponential_moving_average(df,20)
+    #print(ema) # df
 
-    gc = golden_cross(df)
-    print(gc) # bool
+    #gc = golden_cross(df,50,200)
+    #print(gc) 
     
-    s = '2020-04-01'
-    df = df.loc[s:]
-    mac = macd(df) # df
+    #s = '2020-04-01'
+    #df = df.loc[s:]
+    #mac = macd(df) # df
     
-    bb = boiler_bands(df)
-    print(bb)
+    #bb = boiler_bands(df)
+    #print(bb)
     
-    rsi = relative_strength_index(df)
-    print(rsi)
-    
-    turtle = turtle(df)
-    print(turtle)
-    '''
+    #rsi = relative_strength_index(df)
+    #print(rsi)
     
     # Linear Regression
-    '''
-    f = Forecast(df)
-    f.linear_regression()
-    '''
+    #f = Forecast(df)
+    #f.linear_regression()
+    
     
     # Decision Tree
-    s = Signal()
-    s.create_features()
+    #s = Signal()
+    #s.create_features()
     #s.decision_tree()
     #res = pd.read_csv('decision-tree-data/train_results.csv',index_col='Ticker')
     #print(sum(res['Actual Signal'] == res['Prediction'])/len(res))
