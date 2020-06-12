@@ -78,7 +78,12 @@ def macd(data,current_day,slow_ema=26,fast_ema=12):
     data['MACD'] = macd['Adj Close']
     data['Signal'] = signal['Adj Close']
     
-    return data
+    if data['MACD'].iloc[-1] > data['Signal'].iloc[-1]:
+        return 1
+    elif data['MACD'].iloc[-1] < data['Signal'].iloc[-1]:
+        return -1
+    else:
+        return 0
     
 
 '''
@@ -105,4 +110,10 @@ def relative_strength_index(data,current_day,lower_thresh=30,upper_thresh=70,per
     rsi = rsi.reset_index()
     data = data.reset_index()
     data['RSI'] = rsi['Adj Close']
-    return data
+    
+    if data['RSI'].iloc[-1] > lower_thresh:
+        return 1
+    elif data['RSI'].iloc[-1] > upper_thresh:
+        return -1
+    else:
+        return 0
