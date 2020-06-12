@@ -18,6 +18,7 @@ Common trading strategies & ML algorithms that generate buy signals and predict 
 '''
 class Signal:
     def __init__(self):
+        self.portfolio = None
         self.results = None           
     
     '''
@@ -46,31 +47,10 @@ if __name__ == '__main__':
     df = pd.read_csv('100-most-popular.csv')
     print(df)
     
-    #tickers = list(df['Ticker'])
-    #end = '2020-06-05'
-    #df = client.get_historicals(tickers[0])
-    #df = df.loc[:end,:]
+    tickers = list(df['Ticker'])
+    df = client.get_historicals(tickers[0])
     
-    # utilites
-    #ret = daily_return(df)
-    #print(ret)
-    
-    #sma = simple_moving_avg(df,20)
-    #print(sma) # df
-    
-    #ema = exponential_moving_average(df,20)
-    #print(ema) # df
-
-    #gc = golden_cross(df,50,200)
-    #print(gc) 
-    
-    #s = '2020-04-01'
-    #df = df.loc[s:]
-    #mac = macd(df) # df
-    
-    #bb = boiler_bands(df)
-    #print(bb)
-    
-    #rsi = relative_strength_index(df)
-    #print(rsi)
+    x = macd(df,'2020-05-29')
+    x1 = relative_strength_index(df,'2020-05-29')
+    print(x,x1)
     
