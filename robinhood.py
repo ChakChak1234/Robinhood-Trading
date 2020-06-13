@@ -132,7 +132,7 @@ class Robinhood:
         
 if __name__ == '__main__':
     client = Robinhood()
-    client.login('zloeffler22@gmail.com', 'Zach4268!12')
+    client.login()
 
     url = 'https://robinhood.com/collections/'
     cols = ['100-most-popular','new-on-robinhood','technology','finance','energy','pharmaceutical']
