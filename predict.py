@@ -5,9 +5,8 @@ import math
 from datetime import date
 
 from utilities import *
-from LinearRegression import *
-from DecisionTree import *
 from robinhood import *
+from perceptron import *
 
 import matplotlib.pyplot as plt
 
@@ -53,27 +52,48 @@ class Signal:
 
         df.dropna(inplace=True,axis=0)
         return df
+
+    def mlp_network(self,df):
+        df.set_index('Ticker',inplace=True)
+        columns = list(df.columns)
+        
+        # set target classifications
+        target = df[str(columns[-1])]#['7-Day Profit']
+        df.drop(str(columns[-1]),axis=1,inplace=True)
+        
+        # set input data and add col for bias
+        inputs = df
+        inputs['Bias'] = 1
+        
+        # initialize mlp model and train
+        model = MLP(df,inputs,target)
+        model.train()
+        
+        # generate outputs
+        out = [model.predict(p) for p in model.inputs]
+        df['Target'] = target
+        df['Target'] = df['Target'].astype(int)
+        df['Output'] = out
+        
+        df.drop('Bias',axis=1,inplace=True)
+        return df,model
     
-    '''
-    Decision Tree implementation
-    '''
-    def decision_tree(self):        
-        pass
-
-    '''
-    Multivariate Linear Regression implementation
-    '''
-    def linear_regression(self):
-        pass
-
+    def mlp_evaluation(self,train,test):     
+        cols = list(test.columns)
+        
+        y = test[str(cols[-1])]
+        test.drop(str(cols[-1]),axis=1,inplace=True)
+        x = test
+        x.set_index('Ticker',inplace=True)
+        x = x.to_numpy()
+        
+        train_results,model = self.mlp_network(train)
+        
         
 if __name__ == '__main__':
-    df = pd.read_csv('100-most-popular.csv',index_col='Ticker')
-    df.drop(['Name','Price','Collection'],axis=1,inplace=True)
-    s = Signal(df)
     df1 = pd.read_csv('train_04-30-2020.csv')
     df2 = pd.read_csv('train_05-29-2020.csv')
     df3 = pd.read_csv('train_06-01-2020.csv')
-    
-    print(df1,df2,df3)
+    s = Signal(df1)
+    s.mlp_evaluation(df1,df2)
         
